@@ -8,3 +8,4 @@
     msbuild SetWallpaper.slnx /t:clean;rebuild /p:configuration=Release ```
     - This should create SetWallpaper.exe in the bin/Release folder.
     - You can change the Release to Debug in case you wish to build with debug information.
+1. A PowerShell implementation for Windows has also been included here so that it can be used or scheduled without the requirement of having any external software like Python. This script needs the SetWallpaper executable that is mentioned above.
