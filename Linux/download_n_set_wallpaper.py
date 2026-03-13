@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Download Spotlight Wallpaper and set that as desktop background
-This script downloads Spotlight wallpapers into the users Pictures/Wallpapers folder
+Download Wallpaper and set that as desktop background
+This script downloads wallpapers into the users Pictures/Wallpapers folder
 and attempts to set the newly downloaded image as the desktop background.
 """
 
@@ -65,7 +65,7 @@ def setWallpaper(fullPathToPic):
   #subprocess.Popen(["gsettings","set","org.gnome.desktop.background","picture-uri",f"file://{filename}"])
   return
 #-----------------------
-## Not using the BING images as the Spotlight ones are much better.
+## Not using the BING images as the other ones are much better.
 ## Can download and set the BING wallpaper images as well.
 #bing_base = "https://www.bing.com"
 ## Generic BING-wallpaper-of-the-day URL for past 3 days. en-IN = India!
@@ -112,11 +112,11 @@ def setWallpaper(fullPathToPic):
 #except Exception as e:
 #    print(f"An unexpected error occurred: {e}")
 
-# Windows Spotlight wallpapers - Can change bcnt value to download more.
-spotlight_uri = "https://fd.api.iris.microsoft.com/v4/api/selection?&placement=88000820&bcnt=1&country=IN&locale=en-IN&fmt=json"
+# Windows wallpapers - Can change bcnt value to download more.
+image_uri = "https://fd.api.iris.microsoft.com/v4/api/selection?&placement=88000820&bcnt=1&country=IN&locale=en-IN&fmt=json"
 
 try:
-    response = requests.get(spotlight_uri, verify=False)
+    response = requests.get(image_uri, verify=False)
     response.raise_for_status()
     data = response.json()
     # Assuming the JSON has batchrsp with items
@@ -142,10 +142,10 @@ try:
                 except json.JSONDecodeError:
                     print(f"Error parsing inner JSON for item {i+1}")
     else:
-        print("No 'batchrsp' or 'items' key in Spotlight JSON")
+        print("No 'batchrsp' or 'items' key in JSON")
 except requests.RequestException as e:
-    print(f"Error fetching Spotlight data: {e}")
+    print(f"Error fetching wallpaper data: {e}")
 except json.JSONDecodeError as e:
-    print(f"Error parsing Spotlight JSON: {e}")
+    print(f"Error parsing wallpaper JSON: {e}")
 except Exception as e:
-    print(f"An unexpected error occurred with Spotlight: {e}")
+    print(f"An unexpected error occurred with request: {e}")

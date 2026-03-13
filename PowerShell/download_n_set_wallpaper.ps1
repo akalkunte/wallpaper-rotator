@@ -28,7 +28,7 @@ function Get-FilenameFromURL {
   }
 }
 
-function Download-SpotlightWallpaper {
+function Download-Wallpaper {
     param (
         [string]$url = "https://fd.api.iris.microsoft.com/v4/api/selection?&placement=88000820&bcnt=1&country=IN&locale=en-IN&fmt=json"
     )
@@ -50,7 +50,7 @@ function Download-SpotlightWallpaper {
             [string]$date = Get-Date -Format "yyyyMMdd-hhmmss.fff"
             [string]$wpfile = "$downloadFolder\$fname" + "_$date.jpg"
             
-            "Downloading Spotlight wallpaper from $imageUrl as $wpfile"
+            "Downloading wallpaper from $imageUrl as $wpfile"
             Invoke-WebRequest -Uri $imageUrl -OutFile $wpfile -ErrorAction SilentlyContinue
             if (Test-Path -Path $wpfile) {
                 $Global:wallpaperFile = $wpfile
@@ -59,7 +59,7 @@ function Download-SpotlightWallpaper {
             "No landscapeImage found in the response."
         }
     } catch {
-        "Error downloading Spotlight wallpaper: $_"
+        "Error downloading wallpaper: $_"
     }
 }
 # Set the wallpaper to the file specified.
@@ -80,5 +80,5 @@ function Set-WallpaperFromFile {
   }
 }
 # Main function
-Download-SpotlightWallpaper
+Download-Wallpaper
 Set-WallpaperFromFile
