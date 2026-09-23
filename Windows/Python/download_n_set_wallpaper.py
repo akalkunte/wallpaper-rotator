@@ -15,6 +15,7 @@ import requests
 import json
 import datetime
 import winreg
+import random
 
 # Disable SSL warnings for self-signed certificates (optional, for testing)
 requests.packages.urllib3.disable_warnings()
@@ -25,8 +26,14 @@ download_folder = os.path.expanduser(r"~\Pictures\Wallpapers")
 # Create the folder if it is not already present.
 os.makedirs(download_folder, exist_ok=True)
 
-# Full path to executable to set wallpaper
+# Executable to set wallpaper
 setWPExe = r"SetWallpaper.exe"
+
+# To print messages with time-stamp. A primitive log function.
+def logMe(message):
+  if(message.strip()):
+    ts = datetime.datetime.now().strftime('%d-%b-%Y %H:%M:%S.%f')[:-3]
+    print(f"{ts} -- {message}")
 
 # Extract a file name from the URL if unsuccessful then fall back to "spotlight"
 def getFilenameFromURL(url):
@@ -52,7 +59,7 @@ def getFilenameFromURL(url):
     filename = subStr
 
   except Exception as e:
-    print(f"Error extracting filename from URL: {url} Exception: {e}")
+    logMe(f"Error extracting filename from URL: {url} Exception: {e}")
     filename = f"spotlight_"
 
   return filename
@@ -80,63 +87,81 @@ def downloadImage():
                                 # %f gives microseconds, we want milliseconds, so we take the first 3 digits of microseconds
                                 timestamp = datetime.datetime.now().strftime('%d%b%Y_%H%M%S.%f')[:-3]  # Remove last 3 digits of microseconds for milliseconds
                                 filename = os.path.join(download_folder, filename) + f"_{timestamp}.jpg"
-                                print(f"Downloading {download_url} as {filename}")
+                                logMe(f"Downloading {download_url} as {filename}")
                                 img_response = requests.get(download_url, verify=False)
                                 img_response.raise_for_status()
                                 with open(filename, 'wb') as f:
                                     f.write(img_response.content)
                             else:
-                                print(f"File {filename} already exists, skipping.")
+                                logMe(f"File {filename} already exists, skipping.")
                                 return -9, filename # E_FILE_EXISTS
 
                     except json.JSONDecodeError:
-                        print(f"Error parsing inner JSON for item {i+1}")
+                        logMe(f"Error parsing inner JSON for item {i+1}")
                         return -8, filename # E_JSON_PARSE_ERROR
         else:
-            print("No 'batchrsp' or 'items' key in Spotlight JSON")
+            logMe("No 'batchrsp' or 'items' key in Spotlight JSON")
             return -7, filename # E_JSON_STRUCTURE_ERROR
     except requests.RequestException as e:
-        print(f"Error fetching Spotlight data: {e}")
+        logMe(f"Error fetching Spotlight data: {e}")
         return -6, filename # E_REQUEST_ERROR
     except json.JSONDecodeError as e:
-        print(f"Error parsing Spotlight JSON: {e}")
+        logMe(f"Error parsing Spotlight JSON: {e}")
         return -8, filename # E_JSON_PARSE_ERROR
     except Exception as e:
-        print(f"An unexpected error occurred with Spotlight: {e}")
+        logMe(f"An unexpected error occurred with Spotlight: {e}")
         return -5, filename # E_UNEXPECTED_ERROR
     return 0, filename # Success
+
+# Return a random picture name from the pics in the downloads folder.
+def randomOldWPaper():
+    imageExt = ('.jpg', '.png', '.jpeg', '.gif')
+    allFiles = [f for f in os.listdir(download_folder) if f.lower().endswith(imageExt)]
+    if allFiles:
+      randFile = random.choice(allFiles)
+      logMe(f"Ramdomly selected wallpaper: {randFile}")
+      return 0, os.path.join(download_folder, randFile)
+    else:
+      logMe(f"No pictures found at {download_folder}")
+
+    return -1, ""
 
 def downloadAndSetWallpaper():
     # Get downloaded filename
     retCode = -1
     filename = ""
-    retry = 5 # Retries to get a new image downloaded.
+    retry = 10 # Retries to get a new image downloaded.
     while retry > 0 and retCode != 0:
         retCode, filename = downloadImage()
         if retCode == 0:
-            print(f"Downloaded wallpaper successfully: {filename}")
+            logMe(f"Downloaded wallpaper successfully: {filename}")
         elif retCode == -9:
-            print(f"Wallpaper already exists: {filename}")
+            logMe(f"Wallpaper already exists: {filename}")
             retry -= 1
         else:
-            print(f"Error downloading wallpaper, code: {retCode}. Retrying... ({retry} attempts left)")
+            logMe(f"Error downloading wallpaper, code: {retCode}. Retrying... ({retry} attempts left)")
             retry -= 1
     if retCode != 0:
-        print("Failed to download a new wallpaper after multiple attempts.")
-        return
+        logMe("Failed to download a new wallpaper after multiple attempts.")
+        logMe("Getting an old downloaded wallpaper")
+        retCode, filename = randomOldWPaper()
+        if retCode != 0:
+            logMe("Failed to set old downloaded wallpaper")
+            return
+
     # Call exe to set this image as wallpaper.
     try:
         result = subprocess.run([setWPExe, filename], capture_output=True, text=True)
-        print(result.stdout)
-        print(result.stderr)
-        print(f"Exit Code: {result.returncode}")
+        logMe(result.stdout)
+        logMe(result.stderr)
+        logMe(f"Exit Code: {result.returncode}")
         # Update registry with this info.
         myKey = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers")
         winreg.SetValueEx(myKey, "CurrentWallpaperPath", 0, winreg.REG_SZ, filename)
         winreg.CloseKey(myKey)
 
     except Exception as e:
-        print(f"Set wallpaper exception: {e}")
+        logMe(f"Set wallpaper exception: {e}")
     return FileNotFoundError
 
 if __name__ == "__main__":
@@ -169,20 +194,20 @@ if __name__ == "__main__":
 #             filename = os.path.join(download_folder, url_base.split('=')[1] + ".jpg")
 #             # Check if file already exists
 #             if not os.path.exists(filename):
-#                 print(f"Downloading {download_url} as {filename}")
+#                 logMe(f"Downloading {download_url} as {filename}")
 #                 # Download the image
 #                 img_response = requests.get(download_url, verify=False)
 #                 img_response.raise_for_status()
 #                 with open(filename, 'wb') as f:
 #                     f.write(img_response.content)
 #             else:
-#                 print(f"File {filename} already exists, skipping.")
+#                 logMe(f"File {filename} already exists, skipping.")
 #         else:
-#             print("urlBase not found in XML element")
+#             logMe("urlBase not found in XML element")
 #
 # except requests.RequestException as e:
-#     print(f"Error fetching data: {e}")
+#     logMe(f"Error fetching data: {e}")
 # except ET.ParseError as e:
-#     print(f"Error parsing XML: {e}")
+#     logMe(f"Error parsing XML: {e}")
 # except Exception as e:
-#     print(f"An unexpected error occurred: {e}")
+#     logMe(f"An unexpected error occurred: {e}")
