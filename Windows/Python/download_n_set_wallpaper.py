@@ -143,10 +143,10 @@ def downloadAndSetWallpaper():
             retry -= 1
     if retCode != 0:
         logMe("Failed to download a new wallpaper after multiple attempts.")
-        logMe("Getting an old downloaded wallpaper")
+        logMe("Setting an already downloaded wallpaper")
         retCode, filename = randomOldWPaper()
         if retCode != 0:
-            logMe("Failed to set old downloaded wallpaper")
+            logMe("Failed to set wallpaper")
             return
 
     # Call exe to set this image as wallpaper.
